@@ -14,27 +14,38 @@ except AttributeError:
 class ColorFieldWidget(TextInput):
     class Media:
         css = {
-            'all': ("%scolorful/colorPicker.css" % url,)
+            'all': ("%scolorful/css/colorPicker.css" % url,)
         }
-        js  = ("%scolorful/jQuery.colorPicker.js" % url,)
+        js  = ("%scolorful/js/colorpicker.js" % url,)
 
     input_type = 'color'
 
-    def render_script(self, id):
-        return u'''<script type="text/javascript">
-                    (function($){
-                        $(document).ready(function(){
-                            $('#%s').each(function(i, elm){
-                                // Make sure html5 color element is not replaced
-                                if (elm.type != 'color') $(elm).colorPicker();
-                            });
+    def render_script(self, id, color):
+        return u'''<div class='django-color-picker'><div style="background-color: #%s"></div></div>
+        <script type="text/javascript">
+                        django.jQuery(document).ready(function($){
+
+                            $('.django-color-picker').ColorPicker({
+    color: '#%s',
+    onShow: function (colpkr) {
+        $(colpkr).fadeIn(500);
+        return false;
+    },
+    onHide: function (colpkr) {
+        $(colpkr).fadeOut(500);
+        return false;
+    },
+    onChange: function (hsb, hex, rgb) {
+        $('#%s').val(hex).next('.django-color-picker').children('div').css('backgroundColor', '#' + hex);
+    }
+});
                         });
-                    })('django' in window ? django.jQuery: jQuery);
                 </script>
-                ''' % id
+                ''' % (color, color, id)
 
     def render(self, name, value, attrs={}):
         if not 'id' in attrs:
             attrs['id'] = "#id_%s" % name
         render = super(ColorFieldWidget, self).render(name, value, attrs)
-        return SafeUnicode(u"%s%s" % (render, self.render_script(attrs['id'])))
+        print value
+        return SafeUnicode(u"%s%s" % (render, self.render_script(attrs['id'], value)))
